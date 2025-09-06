@@ -72,6 +72,23 @@ The API is available at `http://localhost:8000`. Health check: `GET /api/health`
 - If the API runs in a container and Ollama runs on the host (macOS/Windows), set `OLLAMA_HOST=http://host.docker.internal:11434`.
 - If both run in compose, use the Ollama service name, e.g. `OLLAMA_HOST=http://ollama:11434`.
 
+## Helper Script
+
+Run a single script to build the image, pull the model, and start services:
+
+```bash
+# Host Ollama (default):
+bash scripts/build_and_pull.sh --model "$OLLAMA_MODEL"
+
+# Or use compose-managed Ollama:
+bash scripts/build_and_pull.sh --with-ollama --model "$OLLAMA_MODEL"
+```
+
+Notes:
+- If `--model` is omitted, the script reads `OLLAMA_MODEL` from `.env`.
+- In host mode, the script pulls the model using your host `ollama` CLI and sets `OLLAMA_HOST=http://host.docker.internal:11434` for the API container.
+- In `--with-ollama` mode, it starts the `ollama` compose service, pulls the model in that container, and sets `OLLAMA_HOST=http://ollama:11434`.
+
 ## Endpoints
 
 - `GET /` — basic info
