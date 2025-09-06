@@ -5,7 +5,7 @@ A FastAPI service that calls a locally hosted Ollama model for chat-style intera
 ## Prerequisites
 
 - Python 3.10+
-- [Ollama](https://ollama.com) running locally (default `http://localhost:11434`)
+- [Ollama](https://ollama.com) running within container (default `http://localhost:11434`)
 - Considering the extensive resource usage, `llama3:8b` model available in local Ollama. (for testing the app functionalities)
 
 ## Configuration
@@ -14,12 +14,14 @@ The app reads settings from `.env` in the project root.
 
 Required:
 
-- `OLLAMA_MODEL` — the model name in Ollama (e.g. `llama3:8b`)
+- Instance sizing for 20B (recommended):
+    - GPU: 24 GB VRAM fits 4-bit quantization comfortably (e.g., g5.2xlarge).
+    - CPU-only: favor 32–64 GB RAM; e.g., c7i.4xlarge (16 vCPU, 32 GB) for better headroom.
 
 Optional:
 
-- `OLLAMA_HOST` — default `http://localhost:11434`
-- `APP_NAME` — default `Local LLM API`
+- `OLLAMA_HOST` — default `http://ollama:11434`
+- `APP_NAME` — default `Local gpt-oss-20b Chat API`
 - `DEBUG` — default `false`
 - `CORS_ORIGINS` — comma-separated list (defaults to `*`)
 
@@ -40,37 +42,36 @@ Build the image:
 docker build -t local-llm-api:latest .
 ```
 
-Run the container (connect to host Ollama on macOS/Windows):
-
-```bash
-docker run --rm -it \
-  -p 8000:8000 \
-  --env-file .env \
-  -e OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434} \
-  local-llm-api:latest
-```
-
 ### Docker Compose
-
-Using your host’s Ollama:
-
-```bash
-docker compose up --build
-```
 
 Run an Ollama container too (optional):
 
 ```bash
 docker compose --profile ollama up --build
-# Then set OLLAMA_HOST=http://ollama:11434 in your .env if not already
 ```
 
 The API is available at `http://localhost:8000`. Health check: `GET /api/health`.
 
 ### Docker/Compose host configuration
 
-- If the API runs in a container and Ollama runs on the host (macOS/Windows), set `OLLAMA_HOST=http://host.docker.internal:11434`.
 - If both run in compose, use the Ollama service name, e.g. `OLLAMA_HOST=http://ollama:11434`.
+
+## AWS EC2 Deployment
+
+To deploy this app with the `gpt-oss-20b` model on AWS EC2 (instance sizing, GPU options, Compose configurations, and hardening), see:
+
+- `docs/aws-ec2-deployment.md`
+
+Quick starts on EC2:
+
+- Host Ollama (CPU or GPU on host):
+- Compose-managed Ollama (same box):
+  - `export OLLAMA_HOST=http://ollama:11434 && COMPOSE_PROFILES=ollama docker compose up --build -d`
+  - `docker compose --profile ollama exec ollama ollama pull gpt-oss-20b`
+
+Helper scripts:
+
+- `bash scripts/ollama_container_setup.sh --model gpt-oss-20b [--gpus]` to run Ollama in a container and pull the model.
 
 ## Helper Script
 
@@ -79,15 +80,10 @@ Run a single script to build the image, pull the model, and start services:
 ```bash
 # Host Ollama (default):
 bash scripts/build_and_pull.sh --model "$OLLAMA_MODEL"
-
-# Or use compose-managed Ollama:
-bash scripts/build_and_pull.sh --with-ollama --model "$OLLAMA_MODEL"
 ```
 
 Notes:
 - If `--model` is omitted, the script reads `OLLAMA_MODEL` from `.env`.
-- In host mode, the script pulls the model using your host `ollama` CLI and sets `OLLAMA_HOST=http://host.docker.internal:11434` for the API container.
-- In `--with-ollama` mode, it starts the `ollama` compose service, pulls the model in that container, and sets `OLLAMA_HOST=http://ollama:11434`.
 
 ## Endpoints
 
@@ -102,8 +98,8 @@ Body:
 ```json
 {
   "messages": [
-    {"role": "system", "content": "You are helpful."},
-    {"role": "user", "content": "Say hi in one sentence."}
+    {"role": "system", "content": "You are helpful assistant."},
+    {"role": "user", "content": "What is Langchain in one line?"}
   ],
   "stream": false,
   "temperature": 0.2
