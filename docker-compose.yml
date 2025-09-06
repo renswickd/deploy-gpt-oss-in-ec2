@@ -7,7 +7,6 @@ services:
     env_file:
       - .env
     environment:
-      # Default to host.docker.internal so the API container can reach a host-running Ollama
       - OLLAMA_HOST=${OLLAMA_HOST:-http://ollama:11434}
     extra_hosts:
       # Ensures host.docker.internal resolves on Linux
@@ -25,13 +24,13 @@ services:
     volumes:
       - ollama:/root/.ollama
     restart: unless-stopped
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
 volumes:
   ollama:
