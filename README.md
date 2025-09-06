@@ -32,6 +32,41 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
+## Docker
+
+Build the image:
+
+```bash
+docker build -t local-llm-api:latest .
+```
+
+Run the container (connect to host Ollama on macOS/Windows):
+
+```bash
+docker run --rm -it \
+  -p 8000:8000 \
+  --env-file .env \
+  -e OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434} \
+  local-llm-api:latest
+```
+
+### Docker Compose
+
+Using your host’s Ollama:
+
+```bash
+docker compose up --build
+```
+
+Run an Ollama container too (optional):
+
+```bash
+docker compose --profile ollama up --build
+# Then set OLLAMA_HOST=http://ollama:11434 in your .env if not already
+```
+
+The API is available at `http://localhost:8000`. Health check: `GET /api/health`.
+
 ### Docker/Compose host configuration
 
 - If the API runs in a container and Ollama runs on the host (macOS/Windows), set `OLLAMA_HOST=http://host.docker.internal:11434`.

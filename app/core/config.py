@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = Field(default="Local LLM API", validation_alias="APP_NAME")
+    app_name: str = Field(default="Local GPT-OSS-20B Chat API", validation_alias="APP_NAME")
     debug: bool = Field(default=False, validation_alias="DEBUG")
 
     # Ollama settings
