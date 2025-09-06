@@ -1,0 +1,38 @@
+services:
+  api:
+    build: .
+    image: local-llm-api:latest
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://ollama:11434}
+    extra_hosts:
+      # Ensures host.docker.internal resolves on Linux
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    depends_on:
+      - ollama
+
+  ollama:
+    profiles: ["ollama"]
+    image: ollama/ollama:latest
+    container_name: ollama-gpt-oss-20b
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  ollama:
+    driver: local
+
